@@ -17,15 +17,16 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public class AsyncFilmTmdb extends AsyncTask<String,Integer, FilmTmdb> {
-private String action=null; // déclaration , connu dans doInBackGround
-    public static FilmTmdb filmTmdb;
-@SuppressLint("StaticFieldLeak")
-private Activity activity;
-// on va initialiser un constructeur: par generate => constructor
-AsyncFilmTmdb(Activity activity) { this.activity = activity; }
 
-@Override
-protected FilmTmdb doInBackground(String... strings) {
+    private String action=null; // déclaration , connu dans doInBackGround
+    public static FilmTmdb filmTmdb;
+    @SuppressLint("StaticFieldLeak")
+    private Activity activity;
+// on va initialiser un constructeur: par generate => constructor
+    AsyncFilmTmdb(Activity activity) { this.activity = activity; }
+
+    @Override
+    protected FilmTmdb doInBackground(String... strings) {
         String connection=strings[0];
         action=strings[1]; // déclaré en global
         String film=strings[2];
@@ -33,7 +34,7 @@ protected FilmTmdb doInBackground(String... strings) {
         if (action.equals("GET")){
         filmTmdb=getFilmTmdb(connection);
         Asynchrone.filmTmdb=filmTmdb;
-        Log.d("Loading filmTmdb",filmTmdb.toString());
+        //Log.d("Loading filmTmdb",filmTmdb.toString());
         }
         // if (action.equals("GET")) getAllFilms(connection);
         return filmTmdb;
@@ -43,22 +44,22 @@ protected FilmTmdb doInBackground(String... strings) {
     private FilmTmdb parsejsonFile(String jString) throws JSONException {
         JSONObject jsonObject = new JSONObject(jString);
             //on récupère le 1er objet JSON:
-            String id=jsonObject.getString("id");
-            Log.d("JSONObject ",id);
+         //   String id=jsonObject.getString("id");
+         //   Log.d("JSONObject ",id);
             String backdrop_path=jsonObject.getString("backdrop_path");
-            Log.d("JSONObject ",backdrop_path);
+         //   Log.d("JSONObject ",backdrop_path);
             String original_language=jsonObject.getString("original_language");
-            Log.d("JSONObject ",original_language);
+          //  Log.d("JSONObject ",original_language);
             String original_title=jsonObject.getString("original_title");
-            Log.d("JSONObject ",original_title);
+         //   Log.d("JSONObject ",original_title);
             String overview=jsonObject.getString("overview");
-            Log.d("JSONObject ",overview);
+         //   Log.d("JSONObject ",overview);
             String poster_path=jsonObject.getString("poster_path");
-            Log.d("JSONObject ",poster_path);
+         //   Log.d("JSONObject ",poster_path);
             String runtime=jsonObject.getString("runtime");
-            Log.d("JSONObject ",runtime);
-            String title=jsonObject.getString("title");
-            Log.d("JSONObject ",title);
+         //   Log.d("JSONObject ",runtime);
+         //   String title=jsonObject.getString("title");
+          //  Log.d("JSONObject ",title);
             ArrayList<String> genres =new ArrayList<>();
             JSONArray genresJson = jsonObject.getJSONArray("genres");
         for (int i=0; i<genresJson.length();i++) {
@@ -66,8 +67,9 @@ protected FilmTmdb doInBackground(String... strings) {
             String genreItem=jsonObjectGenres.getString("name");
             genres.add(genreItem);
         }
-        FilmTmdb filmTmdb1=new FilmTmdb(backdrop_path, genres, id, original_language,original_title,
-                            overview,poster_path, runtime,title);
+        Film film = new Film("","","","","","","");
+        FilmTmdb filmTmdb1=new FilmTmdb(backdrop_path, genres, original_language,original_title,
+                            overview,poster_path, runtime,film);
         return filmTmdb1;
     }// fin de la métode: parsejsonFile
 

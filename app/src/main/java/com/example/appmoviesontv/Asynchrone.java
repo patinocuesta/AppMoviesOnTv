@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -45,7 +46,7 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             liste=getAllFilms(connection);
             MainActivity.films=liste;
             for (Film s1:liste){
-                Log.d("Loading titles",s1.toString());
+                //Log.d("Loading titles",s1.toString());
             }
         }
        // if (action.equals("GET")) getAllFilms(connection);
@@ -54,25 +55,23 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
 
     @Override
     protected void onPostExecute(ArrayList<Film> s) {
-        // s est l'ArrayList<Livre>
         super.onPostExecute(s);
-        // dans le cas où action = GET, on doit afficher la liste des livres
-        //dans une ListView à partir des Données envoyées par la méthode doInBackGround
-        //sinon on ne fait rien.
-        //la classe AsyncTask n'est pas une activity, ne donnera pas de context voir etape 1
-        //on va definir un ArrayA après avoir créé danslayout pour la listView:
         if (action.equals("GET")) {
             ArrayList<String> f= new ArrayList<String>();
-            ArrayList<String> filmItem = new ArrayList<String>();
-            String pathAffiche;
+            ArrayList<FilmTmdb> ftmdblist= new ArrayList<FilmTmdb>();
             for (int i=0; i<s.size();i++) {
                 //f.add(String.valueOf(s.get(i).getTmdb()));
                 String tmdb=String.valueOf(s.get(i).getTmdb());
                 AsyncFilmTmdb af=new AsyncFilmTmdb(this.activity);
+
                 String[] parametres={"https://api.themoviedb.org/3/movie/"+tmdb+"?api_key=579e2cef7112c1ad8b0e5909e4becff1&language=fr-FR","GET",null,"0"};
                 af.execute(parametres);
                 try {
                     f.add("https://image.tmdb.org/t/p/w500"+(String.valueOf(af.get().getPoster_path())));
+                    FilmTmdb filmTmdb_Set = af.get();
+                    filmTmdb_Set.setFilm(s.get(i));
+                    Log.d("filmTmdb_Set",filmTmdb_Set.toString() );
+                    ftmdblist.add(filmTmdb_Set);
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
@@ -93,8 +92,9 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             recyclerView.setLayoutManager(layoutManager);
 
             //ArrayList androidVersions = prepareData();
-            DataAdapter adapter = new DataAdapter(activity.getApplicationContext(),f);
+            DataAdapter adapter = new DataAdapter(activity.getApplicationContext(),ftmdblist);
             recyclerView.setAdapter(adapter);
+            
 
 
         }
@@ -102,10 +102,6 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
     private ArrayList<Film> parsejsonFile(String jString) throws JSONException {
         JSONArray filmarray= new JSONArray(jString);
         ArrayList<Film> listfilms=new ArrayList<Film>();
-        //JSONObject jsonObject=new JSONObject(jString);
-       // JSONObject films=jsonObject.getJSONObject("films");
-       //JSONArray film=films.getJSONArray("film");
-
         for (int i=0; i<filmarray.length();i++){
             JSONObject jsonObject=filmarray.getJSONObject(i);
             //on récupère le 1er objet JSON:
@@ -117,7 +113,13 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             Log.d("JSONObject ",year);
             String tmdb=jsonObject.getString("tmdb");
             Log.d("JSONObject ",tmdb);
-            Film film1=new Film(_id,title,year,tmdb, "test", "test","test");
+            String chaine=jsonObject.getJSONArray("onAir").getJSONObject(0).getString("chaine");
+            Log.d("JSONObject ",chaine);
+            String dateonair=jsonObject.getJSONArray("onAir").getJSONObject(0).getString("day");
+            Log.d("JSONObject ",dateonair);
+            String hourenair=jsonObject.getJSONArray("onAir").getJSONObject(0).getString("hour");
+            Log.d("JSONObject ",hourenair);
+            Film film1=new Film(_id,title,year,tmdb, chaine, dateonair,hourenair);
             listfilms.add(film1);
         }// fin de la boucle for
         return listfilms;
@@ -137,11 +139,12 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             httpURLConnection= (HttpURLConnection) url.openConnection();
             //pour lire les données:
             InputStream inputStream= new BufferedInputStream(httpURLConnection.getInputStream());
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF8");
             //boucle dans le strinbuilder: recupere json pour le traiter:
             int inChar;
             StringBuilder readStr=new StringBuilder();
             //boucle pour lire sur le flux de lecture char par char:
-            while ((inChar=inputStream.read())!=-1){
+            while ((inChar=inputStreamReader.read())!=-1){
                 readStr.append((char)inChar);
             }
             //recuperer le resultat:
@@ -165,7 +168,7 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             e.printStackTrace();
         }
         assert listFilms != null;
-        for (Film l:listFilms)  Log.d("JSONObjectListe",l.toString());
+      //  for (Film l:listFilms)  Log.d("JSONObjectListe",l.toString());
         return listFilms;
     } // fin de la methode getAllFilms
 
