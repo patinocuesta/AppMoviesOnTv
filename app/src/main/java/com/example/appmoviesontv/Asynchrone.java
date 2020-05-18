@@ -7,19 +7,28 @@ import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
     private String action=null; // déclaration , connu dans doInBackGround
+    public static FilmTmdb filmTmdb;
     @SuppressLint("StaticFieldLeak")
     private Activity activity;
     // on va initialiser un constructeur: par generate => constructor
@@ -53,18 +62,42 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
         //la classe AsyncTask n'est pas une activity, ne donnera pas de context voir etape 1
         //on va definir un ArrayA après avoir créé danslayout pour la listView:
         if (action.equals("GET")) {
-            ArrayAdapter<Film> aa = new ArrayAdapter<Film>(this.activity,
-                    android.R.layout.simple_list_item_single_choice, s);
-            //récupéerer la liste: le find id ne marche pas comme context ==>
+            ArrayList<String> f= new ArrayList<String>();
+            ArrayList<String> filmItem = new ArrayList<String>();
+            String pathAffiche;
+            for (int i=0; i<s.size();i++) {
+                //f.add(String.valueOf(s.get(i).getTmdb()));
+                String tmdb=String.valueOf(s.get(i).getTmdb());
+                AsyncFilmTmdb af=new AsyncFilmTmdb(this.activity);
+                String[] parametres={"https://api.themoviedb.org/3/movie/"+tmdb+"?api_key=579e2cef7112c1ad8b0e5909e4becff1&language=fr-FR","GET",null,"0"};
+                af.execute(parametres);
+                try {
+                    f.add("https://image.tmdb.org/t/p/w500"+(String.valueOf(af.get().getPoster_path())));
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+/*
+            ArrayAdapter<String> aa = new ArrayAdapter<String>(this.activity,
+                    android.R.layout.simple_list_item_single_choice,f );
             ListView listView = activity.findViewById(R.id.liste);
-            //affecter à la liste
             listView.setAdapter(aa);
-            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE); // une constante statique
-            //avec le GET pas de pb; mais pas avec POST, PUT, DELETE ==> voir plus haut
-            //doInBackGround
-            //==> une autre activity
+            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+ */
+            RecyclerView recyclerView = (RecyclerView)activity.findViewById(R.id.card_recycler_view);
+            recyclerView.setHasFixedSize(true);
+            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(activity.getApplicationContext());
+            recyclerView.setLayoutManager(layoutManager);
+
+            //ArrayList androidVersions = prepareData();
+            DataAdapter adapter = new DataAdapter(activity.getApplicationContext(),f);
+            recyclerView.setAdapter(adapter);
+
+
         }
-        //Toast.makeText(this.activity,"OK",Toast.LENGTH_LONG).show();
     }
     private ArrayList<Film> parsejsonFile(String jString) throws JSONException {
         JSONArray filmarray= new JSONArray(jString);
@@ -89,6 +122,8 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
         }// fin de la boucle for
         return listfilms;
     }// fin de la métode: parsejsonFile
+
+
     private ArrayList<Film> getAllFilms(String connection){
         //initialiser la connection à null
         HttpURLConnection httpURLConnection=null;
