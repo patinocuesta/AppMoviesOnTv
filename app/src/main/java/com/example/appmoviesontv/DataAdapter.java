@@ -22,7 +22,6 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.ViewHolder> {
     private ArrayList<FilmTmdb> f;
     private Context context;
 
-
     public DataAdapter(Context context,ArrayList<FilmTmdb> f) {
         this.context = context;
         this.f = f;

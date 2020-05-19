@@ -2,10 +2,13 @@ package com.example.appmoviesontv;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -30,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
     private String action=null; // déclaration , connu dans doInBackGround
     public static FilmTmdb filmTmdb;
+    public final ArrayList<FilmTmdb> ftmdblist= new ArrayList<FilmTmdb>();
     @SuppressLint("StaticFieldLeak")
     private Activity activity;
     // on va initialiser un constructeur: par generate => constructor
@@ -46,7 +50,7 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             liste=getAllFilms(connection);
             MainActivity.films=liste;
             for (Film s1:liste){
-                //Log.d("Loading titles",s1.toString());
+                Log.d("Loading titles",s1.toString());
             }
         }
        // if (action.equals("GET")) getAllFilms(connection);
@@ -58,9 +62,8 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
         super.onPostExecute(s);
         if (action.equals("GET")) {
             ArrayList<String> f= new ArrayList<String>();
-            ArrayList<FilmTmdb> ftmdblist= new ArrayList<FilmTmdb>();
+
             for (int i=0; i<s.size();i++) {
-                //f.add(String.valueOf(s.get(i).getTmdb()));
                 String tmdb=String.valueOf(s.get(i).getTmdb());
                 AsyncFilmTmdb af=new AsyncFilmTmdb(this.activity);
 
@@ -78,23 +81,52 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
                     e.printStackTrace();
                 }
             }
-/*
-            ArrayAdapter<String> aa = new ArrayAdapter<String>(this.activity,
-                    android.R.layout.simple_list_item_single_choice,f );
-            ListView listView = activity.findViewById(R.id.liste);
-            listView.setAdapter(aa);
-            listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
- */
             RecyclerView recyclerView = (RecyclerView)activity.findViewById(R.id.card_recycler_view);
             recyclerView.setHasFixedSize(true);
             RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(activity.getApplicationContext());
             recyclerView.setLayoutManager(layoutManager);
 
-            //ArrayList androidVersions = prepareData();
             DataAdapter adapter = new DataAdapter(activity.getApplicationContext(),ftmdblist);
             recyclerView.setAdapter(adapter);
-            
+            recyclerView.addOnItemTouchListener(
+                    new RecyclerItemClickListener(activity.getApplicationContext(), recyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
+                        @Override public void onItemClick(View view, int position) {
+                            Intent intent = new Intent(activity.getApplicationContext(), FicheFilmActivity.class);
+                            intent.putExtra("backdrop_path", ftmdblist.get(position).getBackdrop_path());
+                            intent.putExtra("original_language", ftmdblist.get(position).getOriginal_language());
+                            intent.putExtra("original_title", ftmdblist.get(position).getOriginal_title());
+                            intent.putExtra("overview", ftmdblist.get(position).getOverview());
+                            intent.putExtra("poster_path", ftmdblist.get(position).getPoster_path());
+                            intent.putExtra("runtime", ftmdblist.get(position).getRuntime());
+                            intent.putExtra("genres", ftmdblist.get(position).getGenres());
+                            intent.putExtra("title", ftmdblist.get(position).getFilm().getTitle());
+                            intent.putExtra("chaine", ftmdblist.get(position).getFilm().getChaine());
+                            intent.putExtra("dateonair", ftmdblist.get(position).getFilm().getDateonair());
+                            intent.putExtra("hourenair", ftmdblist.get(position).getFilm().getHourenair());
+                            intent.putExtra("tmdb", ftmdblist.get(position).getFilm().getTmdb());
+                            intent.putExtra("year", ftmdblist.get(position).getFilm().getYear());
+                            activity.startActivity(intent);
+                        }
+                        @Override public void onLongItemClick(View view, int position) {
+                            Intent intent = new Intent(activity.getApplicationContext(), FicheFilmActivity.class);
+                            intent.putExtra("backdrop_path", ftmdblist.get(position).getBackdrop_path());
+                            intent.putExtra("original_language", ftmdblist.get(position).getOriginal_language());
+                            intent.putExtra("original_title", ftmdblist.get(position).getOriginal_title());
+                            intent.putExtra("overview", ftmdblist.get(position).getOverview());
+                            intent.putExtra("poster_path", ftmdblist.get(position).getPoster_path());
+                            intent.putExtra("runtime", ftmdblist.get(position).getRuntime());
+                            intent.putExtra("genres", ftmdblist.get(position).getGenres());
+                            intent.putExtra("title", ftmdblist.get(position).getFilm().getTitle());
+                            intent.putExtra("genres", ftmdblist.get(position).getFilm().getChaine());
+                            intent.putExtra("dateonair", ftmdblist.get(position).getFilm().getDateonair());
+                            intent.putExtra("hourenair", ftmdblist.get(position).getFilm().getHourenair());
+                            intent.putExtra("tmdb", ftmdblist.get(position).getFilm().getTmdb());
+                            intent.putExtra("year", ftmdblist.get(position).getFilm().getYear());
+                            activity.startActivity(intent);
+                        }
+                    })
+            );
 
 
         }
@@ -135,7 +167,6 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
         try {
             URL url=new URL(connection);
             //initialiser la connexion
-            //try {
             httpURLConnection= (HttpURLConnection) url.openConnection();
             //pour lire les données:
             InputStream inputStream= new BufferedInputStream(httpURLConnection.getInputStream());
@@ -160,10 +191,7 @@ public class Asynchrone extends AsyncTask<String,Integer, ArrayList<Film>> {
             //fermerla ressource:
             inputStream.close();
             httpURLConnection.disconnect();
-            //} catch (MalformedURLException e) {
-            // mieux le choix catch suivan{t
-            //   e.printStackTrace();
-            // on supprime ce catch car IOException est une erreur générique de 'Malfored...'
+
         } catch (IOException e) {
             e.printStackTrace();
         }

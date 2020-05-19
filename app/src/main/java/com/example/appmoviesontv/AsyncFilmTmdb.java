@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,9 +35,7 @@ public class AsyncFilmTmdb extends AsyncTask<String,Integer, FilmTmdb> {
         if (action.equals("GET")){
         filmTmdb=getFilmTmdb(connection);
         Asynchrone.filmTmdb=filmTmdb;
-        //Log.d("Loading filmTmdb",filmTmdb.toString());
         }
-        // if (action.equals("GET")) getAllFilms(connection);
         return filmTmdb;
         }// fin de doInBackground
 
@@ -82,22 +81,21 @@ public class AsyncFilmTmdb extends AsyncTask<String,Integer, FilmTmdb> {
         try {
             URL url=new URL(connection);
             //initialiser la connexion
-            //try {
+
             httpURLConnection= (HttpURLConnection) url.openConnection();
             //pour lire les données:
             InputStream inputStream= new BufferedInputStream(httpURLConnection.getInputStream());
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF8");
             //boucle dans le strinbuilder: recupere json pour le traiter:
             int inChar;
             StringBuilder readStr=new StringBuilder();
             //boucle pour lire sur le flux de lecture char par char:
-            while ((inChar=inputStream.read())!=-1){
+            while ((inChar=inputStreamReader.read())!=-1){
                 readStr.append((char)inChar);
             }
-            //recuperer le resultat:
+
             resultat=readStr.toString();
 
-            //on parse le resultat qui va convertir la chaine en json
-            //et parser le JSON: cette methoe n'est pas encore créée:
             try {
                 filmTmdb=parsejsonFile(resultat);
             } catch (JSONException e) {
@@ -106,10 +104,7 @@ public class AsyncFilmTmdb extends AsyncTask<String,Integer, FilmTmdb> {
             //fermerla ressource:
             inputStream.close();
             httpURLConnection.disconnect();
-            //} catch (MalformedURLException e) {
-            // mieux le choix catch suivan{t
-            //   e.printStackTrace();
-            // on supprime ce catch car IOException est une erreur générique de 'Malfored...'
+
         } catch (IOException e) {
             e.printStackTrace();
         }
